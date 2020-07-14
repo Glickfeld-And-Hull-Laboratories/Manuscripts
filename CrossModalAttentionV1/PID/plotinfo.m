@@ -1,4 +1,4 @@
-
+attend = 1;
 cc(1,:)=[0 0 1];
 cc(2,:)=[1 0 0];
 number=false;

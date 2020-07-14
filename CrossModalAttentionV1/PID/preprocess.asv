@@ -12,7 +12,7 @@
 % 
 % npcs=15;  %maxumum number of principle components to save
 % nc=60;    %number of clusters of patterns (kmeans)
-function preprocess4PID(data,npcs,nc)
+function D = preprocess4PID(data,npcs,nc)
 
 %Add frame number as a categorical regressor for predicting behavior.
 
@@ -161,3 +161,4 @@ D{n}.Aud.frame=frame2;
 
 end
 %%%end proprocess
+ebd
