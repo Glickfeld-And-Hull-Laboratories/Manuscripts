@@ -20,8 +20,8 @@ function[PID,MI,ENT] = calcPID(D,npc,binaryS)
 
 for n=1:length(D)
 if(binaryS)
-    D{n}.Vis.S=D{n}.Vis.S>0;
-    D{n}.Aud.S=D{n}.Aud.S>0;
+    D{n}.Vis.S=double(D{n}.Vis.S>0);
+    D{n}.Aud.S=double(D{n}.Aud.S>0);
 end
 
 %Directly compute mutual information between variabel pairs.    
