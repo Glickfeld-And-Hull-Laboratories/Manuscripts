@@ -3,17 +3,19 @@ cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID
 clear all; close all
 
 %% load previous?
-runTag = 'boots_exptOr15npcs_categorical';
+runTag = 'exptOr15npcs_categorical';
 doLoadPrevious = false;
-doBootstrapPID = true;
+doBootstrapPID = false;
 doMultiPC = false;
 binaryS = false;
-nBoot = 100;
-% prevTimestampID = '200716_1652'; %not bootstrapped, expt npcs, binary
+nBoot = 50;
+doPlot = true;
+prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
 % prevTimestampID = '200721_1946'; %not bootstrapped, expt npcs, categorical
 % prevTimestampID = '200716_1841'; %not bootstrapped, 15 npcs
-% prevTimestampID = '200720_2003'; %'200716_1436';% boostrapped
-prevTimestampID = '200720_1802'; %not bootstrapped, multiple npcs
+% prevTimestampID = '200720_2003'; %'200716_1436';% boostrapped, binary
+% prevTimestampID = '200727_0119'; %'200716_1436';% boostrapped, categ.
+% prevTimestampID = '200720_1802'; %not bootstrapped, multiple npcs
 %%
 
 jb_dir = ['Z:\home\ashley\Manuscripts\Attention V1\Matlab Figs\JB Dataset'];
@@ -51,7 +53,7 @@ elseif doBootstrapPID
         D_boot = cell(1,length(D));
         for iexp = 1:length(D) %grab random trials for each experiment
             nt = [length(D{iexp}.Vis.B),length(D{iexp}.Aud.B)];
-            rand_trial_idx = arrayfun(@(x) randsample(x,x,0),nt,'unif',0);
+            rand_trial_idx = arrayfun(@(x) randsample(x,x,1),nt,'unif',0);
             d = D{iexp};
             for iav = 1:2
                 if iav == 1
@@ -108,4 +110,6 @@ else
     save(fullfile(fnout,['PID_results_' timestampID]),'PIDresults')
 end
 %% plot
-plotinfo_aw
+if doPlot
+    plotinfo_aw
+end

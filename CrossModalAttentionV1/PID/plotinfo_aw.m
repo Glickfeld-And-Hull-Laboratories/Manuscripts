@@ -1,7 +1,7 @@
 % attend = 1;
 cc(1,:)=[0 0 0];
 cc(2,:)=[0.75 0 0.75];
-attn_label = {'attn';'no attn'};
+attn_label = {'no attn';'attn'};
 av_label = {'vis';'aud'};
 number=false;
 ssize=20;
@@ -186,29 +186,29 @@ for iattend = 0:1
         h = [];
     end
     idx = cell2mat({data.hasAttention}) == iattend;
-    figure(fig_pid)
-    subplot 431; hold on
+    figure(fig_mi)
+    subplot 131; hold on
     plot(PID.MI_SR.Vis(idx),PID.MI_SR.Aud(idx),'.','MarkerSize',ssize)
     title('mutual info in the stimulus and response')
-    subplot 432; hold on
+    subplot 132; hold on
     plot(PID.MI_BR.Vis(idx),PID.MI_BR.Aud(idx),'.','MarkerSize',ssize)
     title('mutual info in the choice and response')
-    subplot 433; hold on
+    subplot 133; hold on
     h(iattend+1) = plot(PID.MI_BR.Vis(idx),PID.MI_BR.Aud(idx),'.','MarkerSize',ssize);
     title('mutual info in the stimulus and choice')
     if iattend == 1
         legend(h,attn_label)
     end
     for iplot = 1:3
-        subplot(4,3,iplot)
+        subplot(1,3,iplot)
         figXAxis([],'Visual',mi_lim)
         figYAxis([],'Auditory',mi_lim)
         figAxForm
         refline(1)
     end
     
-%     figure(fig_pid)
-    subplot 423; hold on
+    figure(fig_pid)
+    subplot 321; hold on
     scatter(PID.II.Vis(idx)./PID.MI_SR.Vis(idx),PID.II.Aud(idx)./PID.MI_SR.Aud(idx),ssize)
     axis([0 1 0 1])
     title('Percent Sensory info in Pop that drives behavior  (PID/SR)')
@@ -220,7 +220,7 @@ for iattend = 0:1
         refline(1)
     end
 
-    subplot 424; hold on
+    subplot 322; hold on
     scatter(1-PID.II.Vis(idx)./PID.MI_SR.Vis(idx),1-PID.II.Aud(idx)./PID.MI_SR.Aud(idx),ssize)
     axis([0 1 0 1])
     refline(1)
@@ -229,7 +229,7 @@ for iattend = 0:1
     ylabel('Auditory Condition')
     figAxForm
 
-    subplot 425; hold on
+    subplot 323; hold on
     scatter(1-PID.II.Vis(idx)./PID.MI_BR.Vis(idx),1-PID.II.Aud(idx)./PID.MI_BR.Aud(idx),ssize)
     axis([0 1 0 1])
     refline(1)
@@ -238,7 +238,7 @@ for iattend = 0:1
     ylabel('Auditory Condition')
     figAxForm
 
-    subplot 426; hold on
+    subplot 324; hold on
     scatter(1-PID.II.Vis(idx)./PID.MI_SB.Vis(idx),1-PID.II.Aud(idx)./PID.MI_SB.Aud(idx),ssize)
     axis([0 1 0 1])
     refline(1)
@@ -248,28 +248,35 @@ for iattend = 0:1
     figAxForm
 
 %     figure(fig_m_pid)
-    subplot(4,2,iattend+7)
+    subplot(3,2,iattend+5); hold on
 
     % non_readout_sensory_info=S_R_info-I_II;
     b1=mean([(PID.II.Vis(idx)./PID.MI_SR.Vis(idx))',(PID.II.Aud(idx)./PID.MI_SR.Aud(idx))']);
+    b1err = ste([(PID.II.Vis(idx)./PID.MI_SR.Vis(idx))',(PID.II.Aud(idx)./PID.MI_SR.Aud(idx))'],1);
     b1=1-b1;% sensory information in neural response R that is not read out for behavior
 
     %internal_choice_info=C_R_info-I_II;
     b2=mean([(PID.II.Vis(idx)./PID.MI_BR.Vis(idx))',(PID.II.Aud(idx)./PID.MI_BR.Aud(idx))']);
+    b2err = ste([(PID.II.Vis(idx)./PID.MI_BR.Vis(idx))',(PID.II.Aud(idx)./PID.MI_BR.Aud(idx))'],1);
     b2=1-b2;% choice information in neural response R that is not related to the stimulus
 
     %S_C_info_from_unobserved_R=S_C_info-I_II;
     b3=mean([(PID.II.Vis(idx)./PID.MI_SB.Vis(idx))',(PID.II.Aud(idx)./PID.MI_SB.Aud(idx))']);
+    b3err = ste([(PID.II.Vis(idx)./PID.MI_SB.Vis(idx))',(PID.II.Aud(idx)./PID.MI_SB.Aud(idx))'],1);
     b3 = 1-b3; % the part of "behavioral performance" that cannot be explained 
                % with recorded neural feature R
         
-    bar([b1;b2;b3;]) 
+    for iav = 1:2
+        h = errorbar([b1(iav);b2(iav);b3(iav);],[b1err(iav);b2err(iav);b3err(iav);],'.','MarkerSize',20);
+        h.Color = cc(iav,:);
+    end
     
+    legend(av_label,'location','northeastoutside')
     figXAxis([],'',[0 4],1:3,{'1-II/SR';'1-II/BR';'1-II/SB'})
+    xtickangle(-45)
     figYAxis([],'II',[0 1])
     figAxForm
-    title(attn_label{iattend+1})
-    legend(av_label,'location','northwest')
+    title({attn_label{iattend+1};'error across expt'})
 end
 end
 if doLoadPrevious
