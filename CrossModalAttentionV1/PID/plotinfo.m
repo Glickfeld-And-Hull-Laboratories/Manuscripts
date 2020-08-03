@@ -1,6 +1,6 @@
-attend = 1;
-cc(1,:)=[0 0 1];
-cc(2,:)=[1 0 0];
+
+cc(1,:)=[0 0 1];  % no Attention is BLUE
+cc(2,:)=[1 0 0];  % Attention is RED
 number=false;
 ssize=20*ones(size(attend));
 
@@ -50,6 +50,18 @@ b3 = 1-b3; % the part of "behavioral performance" that cannot be explained
 
 bar([b1;b2;b3;]) 
 
+figure
+hist([ENT.Aud_S(attend==0)',ENT.Vis_S(attend==0)'])
+xlabel('Stimulus Entropy')
+ylabel('count')
+legend('Auditory Trials','Visual Trials')
+title('Un Attending')
+figure
+hist([ENT.Aud_S(attend==1)',ENT.Vis_S(attend==1)'])
+title('Attending')
+xlabel('Stimulus Entropy')
+ylabel('count')
+legend('Auditory Trials','Visual Trials')
 
 % figure
 % h=subplot(2,2,1), scatter(PID.MI_SB.Vis,PID.MI_SB.Aud,ssize,cc(attend+1,:))

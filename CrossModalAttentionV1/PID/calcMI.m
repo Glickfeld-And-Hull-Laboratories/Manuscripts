@@ -1,6 +1,8 @@
-function [MI,pc,conf,p] = calcMI(X,Y)
+function [MI,pc,conf,p,stat] = calcMI(X,Y)
     if(islogical(Y))
         dv=mean(Y);
+        parms=statset('glmfit');
+        parms.MaxIter=200;
         B=glmfit(X,Y,'binomial');
         p = glmval(B,X,'logit');
         CD=sum(p(Y==1)>dv)/sum(Y==1);
@@ -24,7 +26,6 @@ function [MI,pc,conf,p] = calcMI(X,Y)
         pc=mean(loc'==Y);
         MI = -sum(pY.*log2(pY)) + mean(sum(p.*log2(p),2));
     end
-    
     
 end
 
