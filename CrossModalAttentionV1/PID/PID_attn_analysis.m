@@ -1,13 +1,14 @@
 cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID')
 
 clear all; close all
-
+clc
 %% load previous?
-runTag = 'test';
+runTag = 'test_nCluster_binary';
 doLoadPrevious = false;
 doBootstrapPID = false;
 doMultiPC = false;
-binaryS = false;
+doMultiCluster = true;
+binaryS = true;
 useClusters = true;
 nBoot = 3;
 doPlot = false;
@@ -18,9 +19,9 @@ prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
 % prevTimestampID = '200727_0119'; %'200716_1436';% boostrapped, categ.
 % prevTimestampID = '200720_1802'; %not bootstrapped, multiple npcs
 %%
-addpath ./PID/
-addpath ./PID/glpkmex/
-addpath ./PID/glpkmex/win64/
+% addpath ./PID/
+% addpath ./PID/glpkmex/
+% addpath ./PID/glpkmex/win64/
 jb_dir = ['Z:\home\ashley\Manuscripts\Attention V1\Matlab Figs\JB Dataset'];
 dataGrabDate = '09-Jul-2020';
 
@@ -38,6 +39,15 @@ if doMultiPC
         D{ipc} = preprocess4PID(data,npcs(ipc),nc,binaryS);
         t=toc; 
     end
+elseif doMultiCluster
+    npcs = 15;    %maxumum number of principle components to save
+    nc= [10,20,40,80];    %number of clusters of patterns (kmeans)
+    for icl = 1:length(nc)
+        tic
+        D{icl} = preprocess4PID(data,npcs,nc(icl),binaryS);
+        t=toc; 
+        fprintf('preprocess %s took %s min\n',num2str(icl),num2str(round(t./60)))
+    end
 else
     npcs=15;  %maxumum number of principle components to save
     nc=60;    %number of clusters of patterns (kmeans)
@@ -45,6 +55,7 @@ else
     tic
     D = preprocess4PID(data,npcs,nc,binaryS);
     t=toc;    
+    fprintf('preprocess took %s min\n',num2str(round(t./60)))
 end
 %% PID 
 if doLoadPrevious
@@ -95,6 +106,19 @@ elseif doMultiPC
     for ipc = 1:length(npcs)
         [PID,MI,ENT] = calcPID(D{ipc},npcs(ipc),binaryS,useClusters);
         PIDresults.PID{ipc} = PID;
+    end
+    PIDresults.binaryS = binaryS;
+    PIDresults.D = D;
+    timestampID = [datestr(now,'yymmdd') '_' datestr(now,'HHMM')];
+    save(fullfile(fnout,['PID_results_' timestampID]),'PIDresults')
+elseif doMultiCluster
+    PIDresults = struct;
+    for icl = 1:length(nc)
+        tic
+        [PID,MI,ENT] = calcPID(D{icl},npcs(icl),binaryS,useClusters);
+        PIDresults.PID{icl} = PID;
+        t = toc;
+        fprintf('PID %s took %s min\n',num2str(icl),num2str(round(t./60)))
     end
     PIDresults.binaryS = binaryS;
     PIDresults.D = D;
