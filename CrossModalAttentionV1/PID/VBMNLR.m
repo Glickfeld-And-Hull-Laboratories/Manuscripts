@@ -35,7 +35,7 @@ classdef VBMNLR < handle
     %   
     %   The variable P can be used to compute mutual information
     %
-    %   MI = - sum(mean(p.*log2(p)) + sum(mean(p).*log2(mean(p));
+    %   MI = - sum(mean(p).*log2(mean(p)) + mean(sum(p.*log2(p),2));
     %
             
     
@@ -57,9 +57,15 @@ classdef VBMNLR < handle
     end
     
     methods
-        function self = VBMNLR(K,NR,issparse)  %is sparse = 0 if not sparse
+        function self = VBMNLR(K,NR,issparse,priorprecision)  %is sparse = 0 if not sparse
                                            %          = Expected number of active
                                            %            regressors otherwise
+            if(~exist('priorprecision','var'))
+                priorprecision=1;
+            end
+            if(~exist('issparse','var'))
+                issparse=0;
+            end            
             self.NR=NR;
             self.K=K;
             if(~exist('issparse','var'))
@@ -67,10 +73,12 @@ classdef VBMNLR < handle
             end
             if(issparse==0)
                 for k=1:K
-                    self.beta{k} = dists.expfam.MVN(zeros(NR,1),eye(NR)); %second arg is precision of prior
+                    self.beta{k} = dists.expfam.MVN(zeros(NR,1),priorprecision*eye(NR)); %second arg is precision of prior
                 end
             else
-                self.beta{k} = dists.normalsparse(NR,issparse/NR,issparse/NR);
+                for k=1:K
+                    self.beta{k} = dists.normalsparse(NR,issparse/NR,issparse/NR);
+                end
             end
             self.iters=0;
             self.L=-Inf;            
@@ -180,6 +188,7 @@ classdef VBMNLR < handle
                 Sigma_0{k}=inv(invSigma_0{k});
                 invSigmamu_0(:,k) = self.beta{k}.invSigmamu;
                 mu_0(:,k)=self.beta{k}.mean;
+
                 invSigma{k} = self.beta{k}.invSigma;
                 Sigma{k}=inv(invSigma{k});
                 invSigmamu(:,k) = self.beta{k}.invSigmamu;
@@ -224,7 +233,7 @@ classdef VBMNLR < handle
                 p(n,:)=exp(logp(n,:))/sum(exp(logp(n,:)));
                 if(mod(100*n/Ns,5)==0)
 %                    ['precent complete = ',num2str(n/Ns*100), ' in ',num2str(toc/60),' minutes']
-                    [num2str(toc/n*(Ns-n)),' seconds to completion']
+%                    [num2str(toc/n*(Ns-n)),' seconds to completion']
                 end
             end
             [m,Yhat]=max(logp');
