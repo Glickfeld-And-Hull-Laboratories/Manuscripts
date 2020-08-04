@@ -1,24 +1,27 @@
-function[PID,MI,ENT,PR] = calcPID(D,pncs,binaryS,useclusters)
+function[PID,MI,ENT,PR] = calcPID(D,pncs,binaryS,useclusters,sparsereg)
 %
 %Run outside of function
 % addpath ./PID/
 % addpath ./PID/glpkmex/
 % addpath ./PID/glpkmex/win64/
-%
+% 
 %D{n} contains the data obtained from preprocess.m
-%
-%
+% 
 % pncs is the number of clusters to cluster p(s,b|r) for use with pca data and mnlr fit.
-%
+% 
 % binaryS is a logical which if true (or 1) converts the stimulus to 1 for
 % all values greater than 1.
-%
+% 
 % useclusters is a logical which if true (or 1) uses D{n}.
 % PID contains the information theoretic quantites
 %
 % MI an independent computation of pairwise mutual information
 % ENT is the entropy
 %
+if(~exist('sparsereg','var'))
+    sparsereg=0;
+end
+
 for n=1:length(D)
 if(binaryS)
     D{n}.Vis.S=D{n}.Vis.S>0;
@@ -26,17 +29,17 @@ if(binaryS)
 end
 %
 %Directly compute mutual information between variabel pairs.    
-if(~useclusters)
-    MI.Vis_RS(n) = calcMI(D{n}.Vis.R,D{n}.Vis.S+1);
-    MI.Vis_SB(n) = calcMI(D{n}.Vis.S,D{n}.Vis.B+1);
-    MI.Vis_RB(n) = calcMI(D{n}.Vis.R,D{n}.Vis.B+1);
+%if(~useclusters)
+    MI.Vis_RS(n) = calcMI(D{n}.Vis.R,D{n}.Vis.S+1,sparsereg);
+    MI.Vis_SB(n) = calcMI(D{n}.Vis.S,D{n}.Vis.B+1,sparsereg);
+    MI.Vis_RB(n) = calcMI(D{n}.Vis.R,D{n}.Vis.B+1,sparsereg);
 
-    MI.Aud_RS(n) = calcMI(D{n}.Aud.R,D{n}.Aud.S+1);
-    MI.Aud_SB(n) = calcMI(D{n}.Aud.S,D{n}.Aud.B+1);
-    MI.Aud_RB(n) = calcMI(D{n}.Aud.R,D{n}.Aud.B+1);
-else
-    MI=NaN;
-end
+    MI.Aud_RS(n) = calcMI(D{n}.Aud.R,D{n}.Aud.S+1,sparsereg);
+    MI.Aud_SB(n) = calcMI(D{n}.Aud.S,D{n}.Aud.B+1,sparsereg);
+    MI.Aud_RB(n) = calcMI(D{n}.Aud.R,D{n}.Aud.B+1,sparsereg);
+%else
+%    MI=NaN;
+%end
 
 [C,IA,IC]=unique(D{n}.Vis.S);
 pIA=IA/sum(IA);
@@ -59,14 +62,14 @@ if(~useclusters)
     ENT.Vis_R(n)=NaN;
     
     ns=length(unique(D{n}.Vis.S));
-    [MI.Vis.RSnB(n),~,~,pvbgr] = calcMI(D{n}.Vis.R,D{n}.Vis.S+ns*D{n}.Vis.B+1);
+    [MI.Vis.RSnB(n),~,~,pvbgr] = calcMI(D{n}.Vis.R,D{n}.Vis.S+ns*D{n}.Vis.B+1,sparsereg);
     m=max(D{n}.Vis.S+ns*D{n}.Vis.B+1);
     if(m<2*ns)
         pvbgr(:,m+1:2*ns)=0;
     end
 
     ns=length(unique(D{n}.Aud.S));
-    [MI.Aud_RSnB(n),~,~,pabgr] = calcMI(D{n}.Aud.R,D{n}.Aud.S+ns*D{n}.Aud.B+1);
+    [MI.Aud_RSnB(n),~,~,pabgr] = calcMI(D{n}.Aud.R,D{n}.Aud.S+ns*D{n}.Aud.B+1,sparsereg);
     m=max(D{n}.Aud.S+ns*D{n}.Aud.B+1);
     if(m<2*ns)
         pabgr(:,m+1:2*ns)=0;
@@ -162,7 +165,7 @@ tic
 
 [PID.II.Aud(n), PID.MI_SR.Aud(n), PID.MI_BR.Aud(n), PID.MI_SB.Aud(n), PID.NRSI.Aud(n), PID.ICI.Aud(n), PID.MISB_not_in_R(n).Aud] ...
 =intersection_information(pa);
-[n/length(D), n, toc];
+[n/length(D), n, toc]
 
 end
 

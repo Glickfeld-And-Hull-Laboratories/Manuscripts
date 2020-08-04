@@ -18,7 +18,7 @@ nc=80;    %number of clusters of patterns (kmeans)
 mergstims=2;
 startframe=3;
 nopca4clusters=1;
-zscorepcs=0;
+zscorepcs=1;
 
 %Add frame number as a categorical regressor for predicting behavior.
 
