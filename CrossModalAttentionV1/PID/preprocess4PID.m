@@ -20,8 +20,9 @@ startframe=3;
 nopca4clusters=1;
 zscorepcs=0;
 
-% option to determine number of PCs used 
-NT=length(data(n).dff);
+for n=1:length(data);
+    % option to determine number of PCs used 
+    NT=length(data(n).dff);
     if strcmp(npcs,'expt')
         NPC = round(0.1*NT);
     elseif strcmp(npcs,'expt_plus')
@@ -39,7 +40,6 @@ NT=length(data(n).dff);
 
 %Add frame number as a categorical regressor for predicting behavior.
 
-for n=1:length(data);
 attend(n)=data(n).hasAttention;
 NT=length(data(n).dff);
 
