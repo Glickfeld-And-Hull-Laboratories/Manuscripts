@@ -12,13 +12,35 @@
 % 
 % npcs=15;  %maxumum number of principle components to save
 % nc=60;    %number of clusters of patterns (kmeans)
-function D = preprocess4PID(data,npcs,nc)
+function D = preprocess4PID(data,npcs,nc,binaryS)
+%%% set npcs equal to 'expt' to calculate the number of pcs to be 10% of
+%%% the total trials (max 15 pcs)
+
+
+
 
 %Add frame number as a categorical regressor for predicting behavior.
 
-for n=1:length(data);
+for n=1:length(data)
+
 attend(n)=data(n).hasAttention;
 NT=length(data(n).dff);
+
+% option to determine number of PCs used 
+    if strcmp(npcs,'expt')
+        NPC = round(0.1*NT);
+    elseif strcmp(npcs,'expt_plus')
+        NPC = round(0.1*NT);
+        if NPC > 20 && binaryS
+            NPC = 20;
+        elseif NPC > 15 && ~binaryS
+            NPC = 15;
+        end
+    elseif isnumeric(npcs)
+        NPC = npcs;
+    else
+        error("set npcs to number or expt or expt_plus")
+    end
 
 alldata=[];
 resp=[];
@@ -106,7 +128,7 @@ idx2=~idx1;
 
 %Cluster reduction
 [coeff,score]=pca(alldata);
-score=score(:,1:min(npcs,size(alldata,2)));
+score=score(:,1:min(NPC,size(alldata,2)));
 [z,c]=kmeans(score,nc);
 datatemp=zeros(size(alldata,1),nc);
 for i=1:size(alldata,1)
@@ -131,7 +153,7 @@ D{n}.Aud.Rlabels=z(idx2);
 
 mu=mean(alldata);
 [coeff,score,lambda]=pca(alldata);
-score=score(:,1:min(npcs,size(alldata,2)));
+score=score(:,1:min(NPC,size(alldata,2)));
 
 alldata=zscore(score);
 
@@ -161,4 +183,4 @@ D{n}.Aud.frame=frame2;
 
 end
 %%%end proprocess
-ebd
+end

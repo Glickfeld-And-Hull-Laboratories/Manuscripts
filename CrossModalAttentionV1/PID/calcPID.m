@@ -162,7 +162,7 @@ tic
 
 [PID.II.Aud(n), PID.MI_SR.Aud(n), PID.MI_BR.Aud(n), PID.MI_SB.Aud(n), PID.NRSI.Aud(n), PID.ICI.Aud(n), PID.MISB_not_in_R(n).Aud] ...
 =intersection_information(pa);
-[n/length(D), n, toc]
+[n/length(D), n, toc];
 
 end
 

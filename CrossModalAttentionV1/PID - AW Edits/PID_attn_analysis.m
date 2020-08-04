@@ -3,13 +3,14 @@ cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID
 clear all; close all
 
 %% load previous?
-runTag = 'exptOr15npcs_categorical';
+runTag = 'test';
 doLoadPrevious = false;
 doBootstrapPID = false;
 doMultiPC = false;
 binaryS = false;
-nBoot = 50;
-doPlot = true;
+useClusters = true;
+nBoot = 3;
+doPlot = false;
 prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
 % prevTimestampID = '200721_1946'; %not bootstrapped, expt npcs, categorical
 % prevTimestampID = '200716_1841'; %not bootstrapped, 15 npcs
@@ -17,7 +18,9 @@ prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
 % prevTimestampID = '200727_0119'; %'200716_1436';% boostrapped, categ.
 % prevTimestampID = '200720_1802'; %not bootstrapped, multiple npcs
 %%
-
+addpath ./PID/
+addpath ./PID/glpkmex/
+addpath ./PID/glpkmex/win64/
 jb_dir = ['Z:\home\ashley\Manuscripts\Attention V1\Matlab Figs\JB Dataset'];
 dataGrabDate = '09-Jul-2020';
 
@@ -40,7 +43,7 @@ else
     nc=60;    %number of clusters of patterns (kmeans)
 
     tic
-    D = preprocess4PID(data,'expt_plus',nc,binaryS);
+    D = preprocess4PID(data,npcs,nc,binaryS);
     t=toc;    
 end
 %% PID 
@@ -77,7 +80,7 @@ elseif doBootstrapPID
             D_boot{iexp} = d;
         end
         fprintf('Starting PID bootstrap %s...\n',num2str(iboot))
-        [PID,MI,ENT] = calcPID(D_boot,npcs,binaryS);
+        [PID,MI,ENT] = calcPID(D_boot,npcs,binaryS,useClusters);
         PIDresults.PID{iboot} = PID;
         PIDresults.MI{iboot} = MI;
         PIDresults.ENT{iboot} = ENT;
@@ -90,7 +93,7 @@ elseif doBootstrapPID
 elseif doMultiPC
     PIDresults = struct;
     for ipc = 1:length(npcs)
-        [PID,MI,ENT] = calcPID(D{ipc},npcs(ipc),binaryS);
+        [PID,MI,ENT] = calcPID(D{ipc},npcs(ipc),binaryS,useClusters);
         PIDresults.PID{ipc} = PID;
     end
     PIDresults.binaryS = binaryS;
@@ -99,7 +102,7 @@ elseif doMultiPC
     save(fullfile(fnout,['PID_results_' timestampID]),'PIDresults')
 else
     tic
-    [PID,MI,ENT] = calcPID(D,npcs,binaryS);
+    [PID,MI,ENT] = calcPID(D,npcs,binaryS,useClusters);
     toc
     PIDresults.PID = PID;
     PIDresults.MI = MI;
