@@ -18,8 +18,7 @@ function D = preprocess4PID(data,npcs,nc,binaryS)
 mergstims=2;
 startframe=3;
 nopca4clusters=1;
-zscorepcs=0;
-
+zscorepcs=1;
 for n=1:length(data);
     % option to determine number of PCs used 
     NT=length(data(n).dff);
@@ -37,9 +36,8 @@ for n=1:length(data);
     else
         error("set npcs to number or expt or expt_plus")
     end
-
+%%%% insert preprocess loop here
 %Add frame number as a categorical regressor for predicting behavior.
-
 attend(n)=data(n).hasAttention;
 NT=length(data(n).dff);
 
@@ -51,6 +49,8 @@ frame=[];
 cue=[];
 islast2frames=[];
 for t=1:NT
+    if(sum(data(n).dff{t},2)==0)
+    else
     alldata=[alldata;data(n).dff{t}];
     np=size(data(n).dff{t},1);
     if(data(n).visualTrial(t)) % then visual trial
@@ -92,7 +92,7 @@ for t=1:NT
         cue=[cue;zeros(np,1);];%0 for auditory trials
 
     end
-        
+    end    
 end
 vstim(isnan(vstim))=0;
 [C,IA,IC]=unique(vstim);
@@ -140,7 +140,7 @@ elseif(mergstims==5)
     astim(astim==4|astim==5)=4;
     astim(astim>=6)=5;
 end
-idx = frame>=startframe & cue==1;% & vstim<=4;% & islast2frames==1; 
+idx = frame>=startframe & cue==1 & vstim<=4 & islast2frames==1; 
 
 cue1=cue(idx);
 vstim1=vstim(idx); 
@@ -152,7 +152,7 @@ islast2frames1=islast2frames(idx);
 %%%%%% ASHLEY LOOK HERE TOO (ITS VERY SIMILIAR)
 %astim(astim>4)=4;
 
-idx = frame>=startframe & cue==0 & astim<=4;% & islast2frames==1;
+idx = frame>=startframe & cue==0 & astim<=4 & islast2frames==1;
 cue2=cue(idx);
 vstim2=vstim(idx); 
 astim2=astim(idx);

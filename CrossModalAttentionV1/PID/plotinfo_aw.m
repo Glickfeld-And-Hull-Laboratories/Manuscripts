@@ -20,6 +20,13 @@ if doBootstrapPID
     PID.MI_SR.Aud = nan(nBoot,length(D));
     PID.MI_BR.Aud = nan(nBoot,length(D));
     PID.MI_SB.Aud = nan(nBoot,length(D));
+    ENT = struct;
+    ENT.Vis_S = nan(nBoot,length(D));
+    ENT.Vis_B = nan(nBoot,length(D));
+    ENT.Vis_R = nan(nBoot,length(D));
+    ENT.Aud_S = nan(nBoot,length(D));
+    ENT.Aud_B = nan(nBoot,length(D));
+    ENT.Aud_R = nan(nBoot,length(D));
     for iboot = 1:nBoot
         PID.II.Vis(iboot,:) = PIDresults.PID{iboot}.II.Vis;
         PID.MI_SR.Vis(iboot,:) = PIDresults.PID{iboot}.MI_SR.Vis;
@@ -28,13 +35,20 @@ if doBootstrapPID
         PID.II.Aud(iboot,:) = PIDresults.PID{iboot}.II.Aud;
         PID.MI_SR.Aud(iboot,:) = PIDresults.PID{iboot}.MI_SR.Aud;
         PID.MI_BR.Aud(iboot,:) = PIDresults.PID{iboot}.MI_BR.Aud;
-        PID.MI_SB.Aud(iboot,:) = PIDresults.PID{iboot}.MI_SB.Aud;      
+        PID.MI_SB.Aud(iboot,:) = PIDresults.PID{iboot}.MI_SB.Aud;  
+
+        ENT.Vis_S(iboot,:) = PIDresults.ENT{iboot}.Vis_S;
+        ENT.Vis_B(iboot,:) = PIDresults.ENT{iboot}.Vis_B;
+        ENT.Vis_R(iboot,:) = PIDresults.ENT{iboot}.Vis_R;
+        ENT.Aud_S(iboot,:) = PIDresults.ENT{iboot}.Aud_S;
+        ENT.Aud_B(iboot,:) = PIDresults.ENT{iboot}.Aud_B;
+        ENT.Aud_R(iboot,:) = PIDresults.ENT{iboot}.Aud_R;
     end
 else
     PID = PIDresults.PID;
 end
 %% plot PID results across experiments
-if ~doMultiPC
+if ~doMultiPC & ~doMultiCluster
 setFigParams4Print('landscape')
 fig_pid = figure;
 fig_mi = figure;
@@ -184,6 +198,7 @@ else
 for iattend = 0:1
     if iattend == 0
         h = [];
+        h_scat = [];
     end
     idx = cell2mat({data.hasAttention}) == iattend;
     figure(fig_mi)
@@ -209,15 +224,21 @@ for iattend = 0:1
     
     figure(fig_pid)
     subplot 321; hold on
-    scatter(PID.II.Vis(idx)./PID.MI_SR.Vis(idx),PID.II.Aud(idx)./PID.MI_SR.Aud(idx),ssize)
+    h_scat(iattend+1) = scatter(...
+        PID.II.Vis(idx)./PID.MI_SR.Vis(idx),PID.II.Aud(idx)./PID.MI_SR.Aud(idx),ssize);
     axis([0 1 0 1])
     title('Percent Sensory info in Pop that drives behavior  (PID/SR)')
     xlabel('Visual Condition')
     ylabel('Auditory Condition')
     figAxForm
     if iattend == 1
-        legend(attn_label,'location','southwestoutside')
+        legend(h_scat,attn_label,'location','southwestoutside')
         refline(1)
+    end
+    if iattend == 0
+        idx_halfattend = cellfun(@(x) strcmp(x(1:3),'750'),{data.expt_name});
+        plot(PID.II.Vis(idx_halfattend)./PID.MI_SR.Vis(idx_halfattend),...
+            PID.II.Aud(idx_halfattend)./PID.MI_SR.Aud(idx_halfattend),'k.','MarkerSize',5)
     end
 
     subplot 322; hold on
@@ -228,6 +249,9 @@ for iattend = 0:1
     xlabel('Visual Condition')
     ylabel('Auditory Condition')
     figAxForm
+    if iattend == 0
+        plot(1-PID.II.Vis(idx_halfattend)./PID.MI_SR.Vis(idx_halfattend),1-PID.II.Aud(idx_halfattend)./PID.MI_SR.Aud(idx_halfattend),'k.','MarkerSize',5)
+    end
 
     subplot 323; hold on
     scatter(1-PID.II.Vis(idx)./PID.MI_BR.Vis(idx),1-PID.II.Aud(idx)./PID.MI_BR.Aud(idx),ssize)
@@ -237,6 +261,9 @@ for iattend = 0:1
     xlabel('Visual Condition')
     ylabel('Auditory Condition')
     figAxForm
+    if iattend == 0
+        plot(1-PID.II.Vis(idx_halfattend)./PID.MI_BR.Vis(idx_halfattend),1-PID.II.Aud(idx_halfattend)./PID.MI_BR.Aud(idx_halfattend),'k.','MarkerSize',5)
+    end
 
     subplot 324; hold on
     scatter(1-PID.II.Vis(idx)./PID.MI_SB.Vis(idx),1-PID.II.Aud(idx)./PID.MI_SB.Aud(idx),ssize)
@@ -246,6 +273,9 @@ for iattend = 0:1
     xlabel('Visual Condition')
     ylabel('Auditory Condition')
     figAxForm
+    if iattend == 0
+        plot(1-PID.II.Vis(idx_halfattend)./PID.MI_SB.Vis(idx_halfattend),1-PID.II.Aud(idx_halfattend)./PID.MI_SB.Aud(idx_halfattend),'k.','MarkerSize',5)
+    end
 
 %     figure(fig_m_pid)
     subplot(3,2,iattend+5); hold on
@@ -265,13 +295,14 @@ for iattend = 0:1
     b3err = ste([(PID.II.Vis(idx)./PID.MI_SB.Vis(idx))',(PID.II.Aud(idx)./PID.MI_SB.Aud(idx))'],1);
     b3 = 1-b3; % the part of "behavioral performance" that cannot be explained 
                % with recorded neural feature R
-        
+        h_sum = [];
     for iav = 1:2
-        h = errorbar([b1(iav);b2(iav);b3(iav);],[b1err(iav);b2err(iav);b3err(iav);],'.','MarkerSize',20);
-        h.Color = cc(iav,:);
+        h_sum{iav} = errorbar([b1(iav);b2(iav);b3(iav);],[b1err(iav);b2err(iav);b3err(iav);],'.','MarkerSize',20);
+        h_sum{iav}.Color = cc(iav,:);
     end
-    
-    legend(av_label,'location','northeastoutside')
+    if iattend == 1
+        legend([h_sum{1},h_sum{2}],av_label,'location','northeastoutside')
+    end
     figXAxis([],'',[0 4],1:3,{'1-II/SR';'1-II/BR';'1-II/SB'})
     xtickangle(-45)
     figYAxis([],'II',[0 1])
@@ -290,17 +321,22 @@ end
     print(fullfile(fnout,['MI' saveStr]),'-dpdf','-fillpage')
 end
 
-%% compare npcs used
+%% compare npcs or nclusters used
 doExptPlot = false;
-exptNPCsID = '200721_1946';
-mi_lim_R = [0 0.5];
+% exptNPCsID = '200721_1946';
+mi_lim_R = [0 1.3];
 mi_lim_SB = [0 0.75];
-if doMultiPC
-    load(fullfile(fnout,['PID_results_' exptNPCsID]));
-    y_SR = nan(length(data),length(npcs)+1,2);
-    y_BR = nan(length(data),length(npcs)+1,2);
-    y_SB = nan(length(data),length(npcs)+1,2);
-    x = nan(length(data),length(npcs)+1);
+if doMultiPC | doMultiCluster
+    if doMultiPC
+        n = npcs;
+    elseif doMultiCluster
+        n = nc;
+    end
+%     load(fullfile(fnout,['PID_results_' exptNPCsID]));
+    y_SR = nan(length(data),length(n),2);
+    y_BR = nan(length(data),length(n),2);
+    y_SB = nan(length(data),length(n),2);
+    x = n;
     for iexp = 1:length(data)
         if doExptPlot
             figure
@@ -308,100 +344,163 @@ if doMultiPC
         end
         for iav = 0:1
             if iav == 0
-                ntrials = length(PIDresults.D{iexp}.Vis.Rlabels);
+                ntrials = length(PIDresults.D{1}{iexp}.Vis.Rlabels);
             else
-                ntrials = length(PIDresults.D{iexp}.Aud.Rlabels);
+                ntrials = length(PIDresults.D{1}{iexp}.Aud.Rlabels);
             end
-            for ipc = 1:length(npcs)
+            for i = 1:length(n)
                 if iav == 0
-                    y_SR(iexp,ipc,iav+1) = PID{ipc}.MI_SR.Vis(iexp);
-                    y_BR(iexp,ipc,iav+1) = PID{ipc}.MI_BR.Vis(iexp);
-                    y_SB(iexp,ipc,iav+1) = PID{ipc}.MI_SB.Vis(iexp);
-                    if ipc == length(npcs)
-                        y_SR(iexp,ipc+1,iav+1) = PIDresults.PID.MI_SR.Vis(iexp);
-                        y_BR(iexp,ipc+1,iav+1) = PIDresults.PID.MI_BR.Vis(iexp);
-                        y_SB(iexp,ipc+1,iav+1) = PIDresults.PID.MI_SB.Vis(iexp);
-                    end
+                    y_SR(iexp,i,iav+1) = PIDresults.PID{i}.MI_SR.Vis(iexp);
+                    y_BR(iexp,i,iav+1) = PIDresults.PID{i}.MI_BR.Vis(iexp);
+                    y_SB(iexp,i,iav+1) = PIDresults.PID{i}.MI_SB.Vis(iexp);
                 else
-                    y_SR(iexp,ipc,iav+1) = PID{ipc}.MI_SR.Aud(iexp);
-                    y_BR(iexp,ipc,iav+1) = PID{ipc}.MI_BR.Aud(iexp);
-                    y_SB(iexp,ipc,iav+1) = PID{ipc}.MI_SB.Aud(iexp);
-                    if ipc == length(npcs)
-                        y_SR(iexp,ipc+1,iav+1) = PIDresults.PID.MI_SR.Aud(iexp);
-                        y_BR(iexp,ipc+1,iav+1) = PIDresults.PID.MI_BR.Aud(iexp);
-                        y_SB(iexp,ipc+1,iav+1) = PIDresults.PID.MI_SB.Aud(iexp);
-                    end
-                end
-                if ipc == length(npcs)
-                    x(iexp,:) = cat(2,npcs,size(PIDresults.D{iexp}.Vis.R,2));
+                    y_SR(iexp,i,iav+1) = PIDresults.PID{i}.MI_SR.Aud(iexp);
+                    y_BR(iexp,i,iav+1) = PIDresults.PID{i}.MI_BR.Aud(iexp);
+                    y_SB(iexp,i,iav+1) = PIDresults.PID{i}.MI_SB.Aud(iexp);
                 end
             end
             if doExptPlot
                 subplot(2,3,1+(iav*3))
                 plot(y_SR(iexp,:,iav+1),'.-','MarkerSize',20,'LineWidth',1)
                 title(sprintf('%s Stimulus-Response, %s trials',av_label{iav+1},num2str(ntrials)))
-                figXAxis([],'n PCs',[0 length(npcs)+2],1:length(npcs)+1,[npcs,0])
+                figXAxis([],'n PCs',[0 length(n)+2],1:length(n)+1,[n,0])
                 figYAxis([],'MI (bits)',[])
                 figAxForm
                 subplot(2,3,2+(iav*3))
                 plot(y_BR(iexp,:,iav+1),'.-','MarkerSize',20,'LineWidth',1)
                 title(sprintf('%s Behavior-Response, %s trials',av_label{iav+1},num2str(ntrials)))
-                figXAxis([],'n PCs',[0 length(npcs)+2],1:length(npcs)+1,[npcs,0])
+                figXAxis([],'n PCs',[0 length(n)+2],1:length(n)+1,[n,0])
                 figYAxis([],'MI (bits)',[])
                 figAxForm
                 subplot(2,3,3+(iav*3))
                 plot(y_SB(iexp,:,iav+1),'.-','MarkerSize',20,'LineWidth',1)
                 title(sprintf('%s Stimulus-Behavior, %s trials',av_label{iav+1},num2str(ntrials)))
-                figXAxis([],'n PCs',[0 length(npcs)+2],1:length(npcs)+1,[npcs,0])
+                figXAxis([],'n PCs',[0 length(n)+2],1:length(n)+1,[n,0])
                 figYAxis([],'MI (bits)',[])
                 figAxForm
             end
         end
     end
     figure
-    suptitle('nPCs=0 is nPCs=(0.1*ntrials)')
     for iav = 0:1
         subplot(2,3,1+(iav*3)); hold on
         d  = y_SR(:,:,iav+1);
         for iexp = 1:length(data)
-            [x_sort,sort_ind] = sort(x(iexp,:));
-            plot(x_sort,d(iexp,sort_ind),'k-')
+%             [x_sort,sort_ind] = sort(x(iexp,:));
+            plot(x,d(iexp,:),'k-')
         end
 %         plot(d','k-')
-        errorbar(mean(sort(x,2)),mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
+        errorbar(x,mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
+        if doMultiPC
+            figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
+        elseif doMultiCluster
+            figXAxis([],'n Clusters',[0 max(x(:))+1],x,x)
+        end
+        figYAxis([],'MI (bits)',[mi_lim_R])
+        figAxForm
         title(sprintf('%s Stimulus-Response',av_label{iav+1}))
-        figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
-        figYAxis([],'MI (bits)',[mi_lim_R])
-        figAxForm
+        
         subplot(2,3,2+(iav*3)); hold on
-        d  = y_BR(:,:,iav+1);
+        d  = y_BR(:,:,iav+1);        
         for iexp = 1:length(data)
-            [x_sort,sort_ind] = sort(x(iexp,:));
-            plot(x_sort,d(iexp,sort_ind),'k-')
+%             [x_sort,sort_ind] = sort(x(iexp,:));
+            plot(x,d(iexp,:),'k-')
         end
 %         plot(d','k-')
-        errorbar(mean(sort(x,2)),mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
-        title(sprintf('%s Behavior-Response',av_label{iav+1}))
-        figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
+        errorbar(x,mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
+        if doMultiPC
+            figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
+        elseif doMultiCluster
+            figXAxis([],'n Clusters',[0 max(x(:))+1],x,x)
+        end
         figYAxis([],'MI (bits)',[mi_lim_R])
         figAxForm
+        title(sprintf('%s Behavior-Response',av_label{iav+1}))
+        
         subplot(2,3,3+(iav*3)); hold on
         d  = y_SB(:,:,iav+1);
         for iexp = 1:length(data)
-            [x_sort,sort_ind] = sort(x(iexp,:));
-            plot(x_sort,d(iexp,sort_ind),'k-')
+%             [x_sort,sort_ind] = sort(x(iexp,:));
+            plot(x,d(iexp,:),'k-')
         end
 %         plot(d','k-')
-        errorbar(mean(sort(x,2)),mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
-        title(sprintf('%s Stimulus-Behavior',av_label{iav+1}))
-        figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
-        figYAxis([],'MI (bits)',[mi_lim_SB])
-        figAxForm        
+        errorbar(x,mean(d,1),ste(d,1),'.-','MarkerSize',20,'LineWidth',1)
+        if doMultiPC
+            figXAxis([],'n PCs',[0 max(x(:))+1],0:5:max(x(:)),0:5:max(x(:)))
+        elseif doMultiCluster
+            figXAxis([],'n Clusters',[0 max(x(:))+1],x,x)
+        end
+        figYAxis([],'MI (bits)',[mi_lim_R])
+        figAxForm   
+        title(sprintf('%s Stimulus-Behavior',av_label{iav+1}))     
     end
     if doLoadPrevious
         saveStr = ['MI_results_' runTag '_' prevTimestampID];
     else
         saveStr = ['MI_results_' runTag '_' timestampID];
+    end
+    print(fullfile(fnout,saveStr),'-dpdf','-fillpage')
+end
+%% stimulus entropy
+if ~doMultiPC | ~doMultiCluster | ~doBootstrapPID
+if binaryS
+    ent_S_lim = [0.5 1];
+    ent_R_lim = [1 3.2];
+else
+    ent_S_lim = [0.5 2];
+    ent_R_lim = [3 6];
+end
+figure
+for iattend = 0:1
+    idx = cell2mat({data.hasAttention}) == iattend;
+
+    subplot 321; hold on
+    x = PIDresults.ENT.Vis_S(idx);
+    y = PIDresults.ENT.Vis_R(idx);
+    plot(x,y,'.','MarkerSize',20);
+    subplot 323; hold on
+    y = PIDresults.PID.MI_SR.Vis(idx);
+    plot(x,y,'.','MarkerSize',20);
+    subplot 325; hold on
+    y = PIDresults.PID.II.Vis(idx);
+    plot(x,y,'.','MarkerSize',20);
+    
+    subplot 322; hold on
+    x = PIDresults.ENT.Aud_S(idx);
+    y = PIDresults.ENT.Aud_R(idx);
+    plot(x,y,'.','MarkerSize',20);
+    subplot 324; hold on
+    y = PIDresults.PID.MI_SR.Aud(idx);
+    plot(x,y,'.','MarkerSize',20);
+    subplot 326; hold on
+    y = PIDresults.PID.II.Aud(idx);
+    plot(x,y,'.','MarkerSize',20);
+    
+end
+for iav = 1:2
+    subplot(3,2,iav)
+    refline(1)
+    figXAxis([],'Entropy in Stim',ent_S_lim)
+    figYAxis([],'Entropy in Resp',ent_R_lim)
+    figAxForm
+    title(av_label{iav})
+    
+    subplot(3,2,iav+2)
+    figXAxis([],'Entropy in Stim',ent_S_lim)
+    figYAxis([],'MI (bits) SR',[])
+    figAxForm
+    title(av_label{iav})
+    
+    subplot(3,2,iav+4)
+    figXAxis([],'Entropy in Stim',ent_S_lim)
+    figYAxis([],'PID',[])
+    figAxForm
+    title(av_label{iav})
+end
+    if doLoadPrevious
+        saveStr = ['StimEntropyCorrs_' runTag '_' prevTimestampID];
+    else
+        saveStr = ['StimEntropyCorr_' runTag '_' timestampID];
     end
     print(fullfile(fnout,saveStr),'-dpdf','-fillpage')
 end

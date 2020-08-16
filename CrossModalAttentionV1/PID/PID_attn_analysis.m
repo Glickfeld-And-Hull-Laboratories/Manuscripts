@@ -3,25 +3,32 @@ cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID
 clear all; close all
 clc
 %% load previous?
-runTag = 'test_nCluster_binary';
+runTag = '60Clusters_15pcs_sparseReg_categorical_50boots';
 doLoadPrevious = false;
-doBootstrapPID = false;
+doBootstrapPID = true;
 doMultiPC = false;
-doMultiCluster = true;
-binaryS = true;
+doMultiCluster = false;
+binaryS = false;
 useClusters = true;
-nBoot = 3;
-doPlot = false;
-prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
+doSparseReg = true;
+nBoot = 50;
+doPlot = true;
+% prevTimestampID = '200727_1744'; %not bootstrapped, expt npcs, binary
 % prevTimestampID = '200721_1946'; %not bootstrapped, expt npcs, categorical
 % prevTimestampID = '200716_1841'; %not bootstrapped, 15 npcs
 % prevTimestampID = '200720_2003'; %'200716_1436';% boostrapped, binary
 % prevTimestampID = '200727_0119'; %'200716_1436';% boostrapped, categ.
 % prevTimestampID = '200720_1802'; %not bootstrapped, multiple npcs
+% prevTimestampID = '200804_1909'; %multiple clusters, binary, sparseReg on
+% prevTimestampID = '200805_0324'; %multiple clusters, categorical, sparseReg on
+% prevTimestampID = '200805_1903'; %40 clusters, categorical, sparseReg on
+% prevTimestampID = '200806_0843'; %no clusters, 15 pcs, categorical, sparseReg off
+prevTimestampID = '200814_2239'; %clusters, 15 pcs, categorical, sparseReg on, 50 bootstrap
+
 %%
-% addpath ./PID/
-% addpath ./PID/glpkmex/
-% addpath ./PID/glpkmex/win64/
+addpath ./PID/
+addpath ./PID/glpkmex/
+addpath ./PID/glpkmex/win64/
 jb_dir = ['Z:\home\ashley\Manuscripts\Attention V1\Matlab Figs\JB Dataset'];
 dataGrabDate = '09-Jul-2020';
 
@@ -55,7 +62,7 @@ else
     tic
     D = preprocess4PID(data,npcs,nc,binaryS);
     t=toc;    
-    fprintf('preprocess took %s min\n',num2str(round(t./60)))
+    fprintf('preprocess took %ss\n',num2str(round(t)))
 end
 %% PID 
 if doLoadPrevious
@@ -85,13 +92,13 @@ elseif doBootstrapPID
                 if iav == 1
                     d.Vis = dd;
                 else
-                    dd.Aud = dd;
+                    d.Aud = dd;
                 end                
             end
             D_boot{iexp} = d;
         end
         fprintf('Starting PID bootstrap %s...\n',num2str(iboot))
-        [PID,MI,ENT] = calcPID(D_boot,npcs,binaryS,useClusters);
+        [PID,MI,ENT] = calcPID(D_boot,npcs,binaryS,useClusters,doSparseReg);
         PIDresults.PID{iboot} = PID;
         PIDresults.MI{iboot} = MI;
         PIDresults.ENT{iboot} = ENT;
@@ -104,7 +111,7 @@ elseif doBootstrapPID
 elseif doMultiPC
     PIDresults = struct;
     for ipc = 1:length(npcs)
-        [PID,MI,ENT] = calcPID(D{ipc},npcs(ipc),binaryS,useClusters);
+        [PID,MI,ENT] = calcPID(D{ipc},npcs(ipc),binaryS,useClusters,doSparseReg);
         PIDresults.PID{ipc} = PID;
     end
     PIDresults.binaryS = binaryS;
@@ -115,7 +122,7 @@ elseif doMultiCluster
     PIDresults = struct;
     for icl = 1:length(nc)
         tic
-        [PID,MI,ENT] = calcPID(D{icl},npcs(icl),binaryS,useClusters);
+        [PID,MI,ENT] = calcPID(D{icl},nc(icl),binaryS,useClusters,doSparseReg);
         PIDresults.PID{icl} = PID;
         t = toc;
         fprintf('PID %s took %s min\n',num2str(icl),num2str(round(t./60)))
@@ -126,7 +133,7 @@ elseif doMultiCluster
     save(fullfile(fnout,['PID_results_' timestampID]),'PIDresults')
 else
     tic
-    [PID,MI,ENT] = calcPID(D,npcs,binaryS,useClusters);
+    [PID,MI,ENT] = calcPID(D,nc,binaryS,useClusters,doSparseReg);
     toc
     PIDresults.PID = PID;
     PIDresults.MI = MI;
@@ -139,4 +146,5 @@ end
 %% plot
 if doPlot
     plotinfo_aw
+    plot_temp
 end
