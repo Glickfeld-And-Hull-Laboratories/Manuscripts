@@ -4,7 +4,7 @@ clear all; close all
 clc
 %% load previous?
 runTag = '60Clusters_15pcs_sparseReg_categorical_50boots';
-doLoadPrevious = false;
+doLoadPrevious = true;
 doBootstrapPID = true;
 doMultiPC = false;
 doMultiCluster = false;

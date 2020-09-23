@@ -1,3 +1,9 @@
+
+if doLoadPrevious
+    saveStr = ['_results_' runTag '_' prevTimestampID];
+else
+    saveStr = ['_results_' runTag '_' timestampID];
+end
 mi_lim = [0 1.5];
 ent_S_lim = [0.5 2.5];
 ent_R_lim = [4 5.5];
@@ -7,6 +13,8 @@ suptitle('black=attn,white=no attn,color=mouse')
 fig_mi = figure;
 suptitle('black=attn,white=no attn,color=mouse')
 fig_ent = figure;
+suptitle('black=attn,white=no attn,color=mouse')
+fig_denom = figure;
 suptitle('black=attn,white=no attn,color=mouse')
 
 ms_expt = cellfun(@(x) x(1:3),{data.expt_name},'unif',0);
@@ -201,28 +209,42 @@ for iattend = 0:1
     end
     
     if iattend == 1
+        aoc_ent_tab = cell(1,2);
+        aoc_pid_tab = cell(1,2);
         x = mean(ENT.Vis_S,1);
         y = mean(ENT.Vis_R,1);
         [r,p] = corrcoef(x,y);
         r_ent = r(1,2);
         p_ent = p(1,2);
+        [~,aoc_ent_tab{1},~,aoc_ent_stats] = aoctool(x,y,idx,0.05,'vis stim ent','resp ent','attn','off');
+        xlswrite(fullfile(fnout,['ENT' saveStr '_ancovaResults']),aoc_ent_tab{1},'Vis Resp Entropy')
+%         aoc_ent_comp = multcompare(aoc_ent_stats);
+        
         x = mean(ENT.Aud_S,1);
         y = mean(ENT.Aud_R,1);
         [r,p] = corrcoef(x,y);
         r_ent = cat(2,r_ent,r(1,2));
         p_ent = cat(2,p_ent,p(1,2));
+        [~,aoc_ent_tab{2},~,aoc_ent_stats] = aoctool(x,y,idx,0.05,'aud stim ent','resp ent','attn','off');
+        xlswrite(fullfile(fnout,['ENT' saveStr '_ancovaResults']),aoc_ent_tab{2},'Aud Resp Entropy')
+        
         
         x = mean(ENT.Vis_S,1);
         y = mean(PID.II.Vis./PID.MI_SR.Vis,1);
         [r,p] = corrcoef(x,y);
         r_pid = r(1,2);
         p_pid = p(1,2);
+        [~,aoc_pid_tab{1},~,aoc_pid_stats] = aoctool(x,y,idx,0.05,'vis stim ent','PID/SR','attn','off');
+        xlswrite(fullfile(fnout,['ENT' saveStr '_ancovaResults']),aoc_pid_tab{1},'Vis PID')
+        
         x = mean(ENT.Aud_S,1);
         y = mean(PID.II.Aud./PID.MI_SR.Aud,1);
         [r,p] = corrcoef(x,y);
         r_pid = cat(2,r_pid,r(1,2));
         p_pid = cat(2,p_pid,p(1,2));
-        
+        [~,aoc_pid_tab{2},~,aoc_pid_stats] = aoctool(x,y,idx,0.05,'aud stim ent','PID/SR','attn','off');
+        xlswrite(fullfile(fnout,['ENT' saveStr '_ancovaResults']),aoc_pid_tab{2},'Aud PId')
+                
         for iav = 1:2
             subplot(2,2,iav)
             figXAxis([],'Entropy in Stim',ent_S_lim)
@@ -241,12 +263,131 @@ for iattend = 0:1
                 av_label{iav},sigfigString(r_pid(iav)),...
                 sigfigString(p_pid(iav))))
         end
+        
+        
     end
-end
-if doLoadPrevious
-    saveStr = ['_results_' runTag '_' prevTimestampID];
-else
-    saveStr = ['_results_' runTag '_' timestampID];
+    
+    figure(fig_denom)
+    for im = 1:length(mice)
+        idx_ms = strcmp(ms_expt,mice(im)) & idx;
+        subplot 231; hold on
+        x = mean(PID.MI_SR.Vis(:,idx_ms),1);
+        y = mean(PID.II.Vis(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI SR',mi_lim)
+        subplot 232; hold on
+        x = mean(PID.MI_BR.Vis(:,idx_ms),1);
+        y = mean(PID.II.Vis(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI BR',mi_lim)
+        subplot 233; hold on
+        x = mean(PID.MI_SB.Vis(:,idx_ms),1);
+        y = mean(PID.II.Vis(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI SB',mi_lim)
+        
+        subplot 234; hold on
+        x = mean(PID.MI_SR.Aud(:,idx_ms),1);
+        y = mean(PID.II.Aud(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI SR',mi_lim)
+        subplot 235; hold on
+        x = mean(PID.MI_BR.Aud(:,idx_ms),1);
+        y = mean(PID.II.Aud(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI BR',mi_lim)
+        subplot 236; hold on
+        x = mean(PID.MI_SB.Aud(:,idx_ms),1);
+        y = mean(PID.II.Aud(:,idx_ms),1);
+        s = plot(x,y,'o','MarkerSize',10);
+        s.MarkerFaceColor = attendFaceColor(iattend+1,:);
+        figXAxis([],'MI SB',mi_lim)
+    end
+    subplot 231; hold on
+    x = mean(PID.MI_SR.Vis(:,idx),1);
+    y = mean(PID.II.Vis(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI SR',mi_lim)
+    subplot 232; hold on
+    x = mean(PID.MI_BR.Vis(:,idx),1);
+    y = mean(PID.II.Vis(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI BR',mi_lim)
+    subplot 233; hold on
+    x = mean(PID.MI_SB.Vis(:,idx),1);
+    y = mean(PID.II.Vis(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI SB',mi_lim)
+
+    subplot 234; hold on
+    x = mean(PID.MI_SR.Aud(:,idx),1);
+    y = mean(PID.II.Aud(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI SR',mi_lim)
+    subplot 235; hold on
+    x = mean(PID.MI_BR.Aud(:,idx),1);
+    y = mean(PID.II.Aud(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI BR',mi_lim)
+    subplot 236; hold on
+    x = mean(PID.MI_SB.Aud(:,idx),1);
+    y = mean(PID.II.Aud(:,idx),1);
+    mdl = fitlm(x,y);
+    yfit = mdl.Coefficients.Estimate(2)*x+mdl.Coefficients.Estimate(1);
+    s = plot(x,yfit,'k-');
+    s.LineWidth = 1; 
+    if iattend == 0
+        s.LineStyle = '--';
+    end
+    figXAxis([],'MI SB',mi_lim)
+    
+    if iattend == 1
+        for iplot = 1:6
+            subplot(2,3,iplot)
+            figYAxis([],'PID',[])
+            figAxForm
+            if iplot > 3
+                title('Auditory')
+            else
+                title('Visual')
+            end
+        end
+    end
 end
 figure(fig_pid)
 print(fullfile(fnout,['PID' saveStr]),'-dpdf','-fillpage')
@@ -254,3 +395,9 @@ figure(fig_mi)
 print(fullfile(fnout,['MI' saveStr]),'-dpdf','-fillpage')
 figure(fig_ent)
 print(fullfile(fnout,['ENT' saveStr]),'-dpdf','-fillpage')
+figure(fig_denom)
+print(fullfile(fnout,['denomAnalysis' saveStr]),'-dpdf','-fillpage')
+
+
+%% plot PID and MI versus each other to check for dependence of PID on differences in denominator
+
