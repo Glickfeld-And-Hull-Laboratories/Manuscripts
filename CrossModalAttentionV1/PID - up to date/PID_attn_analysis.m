@@ -1,11 +1,11 @@
-cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID')
+cd('C:\Users\ashley\Documents\Repositories\Manuscripts\CrossModalAttentionV1\PID - up to date')
 
 clear all; close all
 clc
 %% load previous?
 runTag = '60Clusters_15pcs_sparseReg_categorical_50boots';
 doLoadPrevious = true;
-doBootstrapPID = true;
+doBootstrapPID = false;
 doMultiPC = false;
 doMultiCluster = false;
 binaryS = false;
