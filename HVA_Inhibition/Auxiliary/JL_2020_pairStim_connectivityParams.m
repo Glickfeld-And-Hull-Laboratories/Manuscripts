@@ -1,4 +1,4 @@
-function pairStim_connectivityParams(index,u_input)
+function JL_2020_pairStim_connectivityParams(index,u_input)
 
 summary_table = readtable('Z:\home\jen\Notebook files\HVA recording\HVA_IN_pyr_pair_connectivity.xlsx','Sheet',u_input);
 %% load files
