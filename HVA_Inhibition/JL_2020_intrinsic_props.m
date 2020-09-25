@@ -3,7 +3,7 @@
 % measures Rin, tau, AP adapt, Ih, FI, threshold, spike width
 % used in Li 2020 for comparing intrinsic properties across HVAs 
 
-function [spikes,param] = intrinsic_props(filename,wait_flag)
+function [spikes,param] = JL_2020_intrinsic_props(filename,wait_flag)
 
 % store filename in param struct
 param.filename = filename;
